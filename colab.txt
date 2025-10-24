@@ -1,0 +1,6 @@
+# No Colab, rode isso primeiro:
+!pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+!pip install transformers datasets sentencepiece snntorch
+
+# Depois:
+!python main.py
