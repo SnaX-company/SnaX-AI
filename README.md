@@ -41,8 +41,8 @@
 !pip install transformers datasets sentencepiece snntorch
 
 # 2. Baixar projeto
-!git clone https://github.com/SEU_USUARIO/snax_ia
-%cd snax_ia
+!git clone https://github.com/Destro001400/SnaX-AI
+%cd SnaX-AI
 
 # 3. Treinar
 !python main.py
