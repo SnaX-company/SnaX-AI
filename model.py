@@ -1,7 +1,6 @@
 # model.py
 # SnaX IA v2 - Spiking Neural Architecture eXtreme
 # IA com raciocínio avançado para celular
-# Total: ~500M params → 15MB após otimização
 
 import torch
 import torch.nn as nn
@@ -13,9 +12,9 @@ class SpikingWorker(nn.Module):
     - Só ativa quando necessário → economiza bateria
     - 10x mais eficiente que redes normais
     """
-    def __init__(self, hidden_size):
+    def __init__(self, hidden_size, beta=0.9): # beta agora é um argumento
         super().__init__()
-        self.lif = snn.Leaky(beta=0.9)  # Neurônio biológico
+        self.lif = snn.Leaky(beta=beta)  # Neurônio biológico com beta configurável
         self.fc = nn.Linear(hidden_size, hidden_size)
     
     def forward(self, x):
@@ -39,35 +38,45 @@ class SnaXIA(nn.Module):
     - Workers: executam (SNNs)
     - Memória: guarda contexto
     """
-    def __init__(self, vocab_size=8000, hidden_size=256, num_heads=4, max_seq=512):
+    def __init__(self, config): # Aceita um dicionário de configuração
         super().__init__()
+        # Extrai os hiperparâmetros do config
+        vocab_size = config["vocab_size"]
+        hidden_size = config["hidden_size"]
+        num_heads = config["num_heads"]
+        max_seq = config["max_seq_length"]
+        dim_feedforward = config["dim_feedforward"]
+        num_layers = config["num_layers"]
+        memory_slots = config["memory_slots"]
+        snn_beta = config["snn_beta"]
+
         self.hidden_size = hidden_size
         
         # === EMBEDDING ===
         self.embed = nn.Embedding(vocab_size, hidden_size)
         self.pos_encoder = nn.Parameter(torch.randn(1, max_seq, hidden_size))
         
-        # === CEO: Transformer leve (2 camadas) ===
+        # === CEO: Transformer leve (configurável) ===
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=hidden_size,
             nhead=num_heads,
-            dim_feedforward=512,
+            dim_feedforward=dim_feedforward,
             batch_first=True,
             activation='gelu'
         )
-        self.ceo = nn.TransformerEncoder(encoder_layer, num_layers=2)
+        self.ceo = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
         
-        # === WORKERS SnaX ===
+        # === WORKERS SnaX (configurável) ===
         self.workers = nn.ModuleDict({
-            'logico': SpikingWorker(hidden_size),
-            'matematico': SpikingWorker(hidden_size),
+            'logico': SpikingWorker(hidden_size, beta=snn_beta),
+            'matematico': SpikingWorker(hidden_size, beta=snn_beta),
             'linguistico': nn.Conv1d(hidden_size, hidden_size, 3, padding=1)
         })
         
-        # === MEMÓRIA HIERÁRQUICA (64 slots = 16KB) ===
-        self.memory = nn.Parameter(torch.randn(64, hidden_size))
-        self.read_head = nn.Linear(hidden_size, 64)
-        self.write_head = nn.Linear(hidden_size, 64)
+        # === MEMÓRIA HIERÁRQUICA (configurável) ===
+        self.memory = nn.Parameter(torch.randn(memory_slots, hidden_size))
+        self.read_head = nn.Linear(hidden_size, memory_slots)
+        self.write_head = nn.Linear(hidden_size, memory_slots)
         
         # === SAÍDA FINAL ===
         self.output_head = nn.Linear(hidden_size * 4, vocab_size)
