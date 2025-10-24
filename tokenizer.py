@@ -17,7 +17,7 @@ class SnaXTokenizer:
     - Atualiza vocabulário automaticamente
     - Usa byte_fallback → nunca tem <unk>
     """
-    def __init__(self, model_path="tokenizer.model", vocab_size=8000):
+    def __init__(self, model_path="tokenizer.model", vocab_size=752):
         self.model_path = model_path
         self.vocab_size = vocab_size
         self.sp = spm.SentencePieceProcessor()

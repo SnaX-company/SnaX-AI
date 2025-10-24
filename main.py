@@ -55,8 +55,14 @@ def preprocess(example):
     prompt = f"Q: {question}\nA:"
     target = answer
     
-    input_ids = tokenizer.encode(prompt)[:MAX_SEQ_LEN]
-    label_ids = tokenizer.encode(target)[:MAX_SEQ_LEN]
+    input_ids = tokenizer.encode(prompt)
+    label_ids = tokenizer.encode(target)
+
+    input_ids = input_ids[:MAX_SEQ_LEN]
+    label_ids = label_ids[:MAX_SEQ_LEN]
+
+    input_ids = input_ids + [0] * (MAX_SEQ_LEN - len(input_ids))
+    label_ids = label_ids + [-100] * (MAX_SEQ_LEN - len(label_ids))
     
     return {"input_ids": input_ids, "labels": label_ids}
 
@@ -93,13 +99,8 @@ model.train()
 for epoch in range(EPOCHS):
     total_loss = 0
     for step, (input_ids, labels) in enumerate(train_loader):
-        # Padding
-        input_ids = torch.nn.utils.rnn.pad_sequence(
-            input_ids, batch_first=True, padding_value=0
-        ).to(DEVICE)
-        labels = torch.nn.utils.rnn.pad_sequence(
-            labels, batch_first=True, padding_value=-100
-        ).to(DEVICE)
+        input_ids = input_ids.to(DEVICE)
+        labels = labels.to(DEVICE)
         
         # Forward
         logits = model(input_ids)

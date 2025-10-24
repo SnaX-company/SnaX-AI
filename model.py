@@ -30,7 +30,7 @@ class SpikingWorker(nn.Module):
             spk_rec.append(spk)
         
         # Média dos picos → saída estável
-        return torch.stack(spk_rec, dim=1).mean(dim=1)
+        return torch.stack(spk_rec, dim=1)
 
 class SnaXIA(nn.Module):
     """
@@ -84,18 +84,21 @@ class SnaXIA(nn.Module):
         # Workers executam
         logico_out = self.workers['logico'](plan)
         mat_out = self.workers['matematico'](plan)
-        ling_out = self.workers['linguistico'](plan.transpose(1, 2)).transpose(1, 2).mean(dim=1)
+        ling_out = self.workers['linguistico'](plan.transpose(1, 2)).transpose(1, 2)
         
         # Junta tudo
-        combined = torch.cat([logico_out, mat_out, ling_out, plan.mean(dim=1)], dim=-1)
+        combined = torch.cat([logico_out, mat_out, ling_out, plan], dim=-1)
+        
+        # Process memory
+        plan_mean = plan.mean(dim=1)
         
         # Lê da memória
-        read_weights = torch.softmax(self.read_head(plan.mean(dim=1)), dim=-1)
+        read_weights = torch.softmax(self.read_head(plan_mean), dim=-1)
         memory_read = read_weights @ self.memory
         
         # Escreve na memória (aprendizado contínuo)
-        write_weights = torch.softmax(self.write_head(plan.mean(dim=1)), dim=-1)
-        self.memory.data = 0.99 * self.memory.data + 0.01 * (write_weights.t() @ plan.mean(dim=1))
+        write_weights = torch.softmax(self.write_head(plan_mean), dim=-1)
+        self.memory.data = 0.99 * self.memory.data + 0.01 * (write_weights.t() @ plan_mean)
         
         # Logits finais
         logits = self.output_head(combined)
