@@ -119,7 +119,7 @@ for epoch in range(CONFIG["epochs"]):
         
         optimizer.zero_grad()
         logits = model(x)
-        loss = F.cross_entropy(logits.view(-1, VOCAB_SIZE), y.view(-1), ignore_index=-100)
+        loss = F.cross_entropy(logits.view(-1, CONFIG["vocab_size"]), y.view(-1), ignore_index=-100)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0) # Grad clipping
         optimizer.step()
@@ -137,7 +137,7 @@ for epoch in range(CONFIG["epochs"]):
         for x, y in val_loader:
             x, y = x.to(DEVICE), y.to(DEVICE)
             logits = model(x)
-            loss = F.cross_entropy(logits.view(-1, VOCAB_SIZE), y.view(-1), ignore_index=-100)
+            loss = F.cross_entropy(logits.view(-1, CONFIG["vocab_size"]), y.view(-1), ignore_index=-100)
             total_val_loss += loss.item()
     
     avg_val_loss = total_val_loss / len(val_loader)

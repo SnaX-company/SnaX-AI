@@ -76,6 +76,10 @@ class SnaXTokenizer:
     def get_vocab_size(self):
         return self.sp.get_piece_size()
 
+    def pad_id(self):
+        """Retorna o ID do token de padding"""
+        return self.sp.pad_id()
+
     # ======================
     # ATUALIZAÇÃO AUTOMÁTICA
     # ======================
